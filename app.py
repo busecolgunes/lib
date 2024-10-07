@@ -88,3 +88,26 @@ if st.button('Submit'):
 # Option to display the existing data
 if st.checkbox('Show Data'):
     st.write(df)
+
+# Delete functionality
+if st.checkbox('Delete a Row'):
+    if not df.empty:
+        # Display the data as a table with an index
+        st.write("Select a row index to delete:")
+        st.dataframe(df)
+
+        # User input to select the row index to delete
+        row_index_to_delete = st.number_input('Row index to delete:', min_value=0, max_value=len(df) - 1, step=1)
+
+        # Confirm and delete the selected row
+        if st.button('Delete Row'):
+            df = df.drop(df.index[row_index_to_delete]).reset_index(drop=True)
+
+            # Save the updated DataFrame to the selected Excel file
+            df.to_excel(EXCEL_FILE, index=False)
+
+            st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
+            st.write("Updated data:")
+            st.write(df)
+    else:
+        st.warning('No data available to delete.')
