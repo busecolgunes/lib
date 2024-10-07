@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 # Add a title to the app
-st.title('OMAS ARAÇ TAKİP SİSTEMİ')
+st.title('OMAS ARAÇ YAKIT TAKİP SİSTEMİ')
 
 # Display the current data section title
 st.subheader('KM VE MAZOT HESAPLAMA')
