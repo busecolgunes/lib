@@ -5,6 +5,9 @@ from pathlib import Path
 # Add a title to the app
 st.title('Simple Data Entry Form for Multiple Excel Files')
 
+# Display the current data section title
+st.subheader('KM VE MAZOT HESAP')
+
 # List of available Excel files
 files_dict = {
     '06BFD673': '06BFD673.xlsx',
@@ -32,10 +35,6 @@ if EXCEL_FILE.exists():
     df = pd.read_excel(EXCEL_FILE)
 else:
     df = pd.DataFrame(columns=['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100'])
-
-# Display the current data table
-st.write("Current Data:")
-st.dataframe(df)
 
 # Create input fields for the user
 tarih = st.text_input('Tarih')
@@ -107,10 +106,9 @@ if st.checkbox('Delete a Row'):
             df.to_excel(EXCEL_FILE, index=False)
 
             st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
-
     else:
         st.warning('No data available to delete.')
 
-# Display the updated data after submission or deletion
-st.write("Updated Data:")
+# Display the updated data under "KM VE MAZOT HESAP"
+st.subheader('Current Data:')
 st.dataframe(df)  # Show the latest state of the DataFrame at the end
