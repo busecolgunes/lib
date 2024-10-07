@@ -3,10 +3,10 @@ import pandas as pd
 from pathlib import Path
 
 # Add a title to the app
-st.title('Simple Data Entry Form for Multiple Excel Files')
+st.title('OMAS ARAÇ TAKİP SİSTEMİ')
 
 # Display the current data section title
-st.subheader('KM VE MAZOT HESAP')
+st.subheader('KM VE MAZOT HESAPLAMA')
 
 # List of available Excel files
 files_dict = {
@@ -23,7 +23,7 @@ files_dict = {
 }
 
 # Allow the user to select which file to work with
-selected_file_key = st.selectbox('Select a file:', list(files_dict.keys()))
+selected_file_key = st.selectbox('Bir plaka seçiniz:', list(files_dict.keys()))
 selected_file_name = files_dict[selected_file_key]
 
 # Define the file path
@@ -37,12 +37,12 @@ else:
     df = pd.DataFrame(columns=['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100'])
 
 # Create input fields for the user
-tarih = st.text_input('Tarih')
-baslangickm = st.number_input('Başlangıç Kilometre', min_value=0)
-mazot = st.number_input('Alınan Mazot', min_value=0)
+tarih = st.text_input('Tarih:')
+baslangickm = st.number_input('Mevcut Kilometre:', min_value=0)
+mazot = st.number_input('Alınan Mazot:', min_value=0)
 
 # When the user clicks the Submit button
-if st.button('Submit'):
+if st.button('Ekle'):
     # Calculate the cumulative mazot (toplammazot)
     toplammazot = df['mazot'].sum() + mazot
 
@@ -89,14 +89,14 @@ if st.button('Submit'):
     st.success(f'Data saved to {selected_file_name}!')
 
 # Delete functionality
-if st.checkbox('Delete a Row'):
+if st.checkbox('Sil'):
     if not df.empty:
         # Display the data as a table with an index
-        st.write("Select a row index to delete:")
+        st.write("Lütfen silinecek satırın numarasını seçin:")
         st.dataframe(df)
 
         # User input to select the row index to delete
-        row_index_to_delete = st.number_input('Row index to delete:', min_value=0, max_value=len(df) - 1, step=1)
+        row_index_to_delete = st.number_input('Silinecek satır numarası:', min_value=0, max_value=len(df) - 1, step=1)
 
         # Confirm and delete the selected row
         if st.button('Delete Row'):
@@ -110,5 +110,5 @@ if st.checkbox('Delete a Row'):
         st.warning('No data available to delete.')
 
 # Display the updated data under "KM VE MAZOT HESAP"
-st.subheader('Current Data:')
+st.subheader('Veriler:')
 st.dataframe(df)  # Show the latest state of the DataFrame at the end
