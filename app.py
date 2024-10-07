@@ -33,6 +33,10 @@ if EXCEL_FILE.exists():
 else:
     df = pd.DataFrame(columns=['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100'])
 
+# Display the current data table
+st.write("Current Data:")
+st.dataframe(df)
+
 # Create input fields for the user
 tarih = st.text_input('Tarih')
 baslangickm = st.number_input('Başlangıç Kilometre', min_value=0)
@@ -85,7 +89,7 @@ if st.button('Submit'):
     # Show success message
     st.success(f'Data saved to {selected_file_name}!')
 
-# Only show the data if the user selects to delete a row or if there is data present
+# Delete functionality
 if st.checkbox('Delete a Row'):
     if not df.empty:
         # Display the data as a table with an index
@@ -104,6 +108,6 @@ if st.checkbox('Delete a Row'):
 
             st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
             st.write("Updated data:")
-            st.dataframe(df)  # Show only the updated data after deletion
+            st.dataframe(df)  # Show the updated DataFrame
     else:
         st.warning('No data available to delete.')
