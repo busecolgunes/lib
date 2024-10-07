@@ -107,7 +107,10 @@ if st.checkbox('Delete a Row'):
             df.to_excel(EXCEL_FILE, index=False)
 
             st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
-            st.write("Updated data:")
-            st.dataframe(df)  # Show the updated DataFrame
+
     else:
         st.warning('No data available to delete.')
+
+# Display the updated data after submission or deletion
+st.write("Updated Data:")
+st.dataframe(df)  # Show the latest state of the DataFrame at the end
