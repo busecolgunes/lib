@@ -85,11 +85,7 @@ if st.button('Submit'):
     # Show success message
     st.success(f'Data saved to {selected_file_name}!')
 
-# Option to display the existing data
-if st.checkbox('Show Data'):
-    st.write(df)
-
-# Delete functionality
+# Only show the data if the user selects to delete a row or if there is data present
 if st.checkbox('Delete a Row'):
     if not df.empty:
         # Display the data as a table with an index
@@ -108,6 +104,6 @@ if st.checkbox('Delete a Row'):
 
             st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
             st.write("Updated data:")
-            st.write(df)
+            st.dataframe(df)  # Show only the updated data after deletion
     else:
         st.warning('No data available to delete.')
