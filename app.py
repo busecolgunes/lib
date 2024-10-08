@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 from pathlib import Path
 
 # Add a title to the app
@@ -112,3 +113,20 @@ if st.checkbox('Sil'):
 # Display the updated data under "KM VE MAZOT HESAP"
 st.subheader('Veriler:')
 st.dataframe(df)  # Show the latest state of the DataFrame at the end
+
+# Button to download the updated Excel file
+def to_excel(df):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False)
+    processed_data = output.getvalue()
+    return processed_data
+
+if not df.empty:
+    excel_data = to_excel(df)
+    st.download_button(
+        label="Excel Dosyasını İndir",
+        data=excel_data,
+        file_name=selected_file_name,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
