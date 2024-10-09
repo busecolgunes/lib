@@ -21,10 +21,10 @@ files_dict = {
     'FORKLIFT': 'FORKLIFT.xlsx',
     '34BAG417': '34BAG417.xlsx',
     '34BIT882': '34BIT882.xlsx',
-    '01BOK56': '01BOK56.xlsx',  # New file
-    '01SH480': '01SH480.xlsx',  # New file
-    '01ACJ962': '01ACJ962.xlsx',  # New file
-    'JENERATOR': 'JENERATOR.xlsx'  # New file
+    '01BOK56': '01BOK56.xlsx',
+    '01SH480': '01SH480.xlsx',
+    '01ACJ962': '01ACJ962.xlsx',
+    'JENERATOR': 'JENERATOR.xlsx'
 }
 
 # Allow the user to select which file to work with
@@ -111,7 +111,7 @@ if uploaded_file is not None:
         uploaded_columns = list(uploaded_df.columns)
         missing_columns = [col for col in expected_columns_normalized if col not in uploaded_columns]
         extra_columns = [col for col in uploaded_columns if col not in expected_columns_normalized]
-        
+
         if not missing_columns and not extra_columns:
             # Rename columns in the uploaded file to match exactly with expected columns
             uploaded_df.columns = expected_columns  # This ensures the correct naming
@@ -132,9 +132,11 @@ if uploaded_file is not None:
     except Exception as e:
         st.error(f'Hata oluştu: {e}')
 
-
 # Delete functionality
-if st.checkbox('Sil'):
+st.subheader('Veri Silme Seçenekleri')
+
+# Row deletion
+if st.checkbox('Veri Satırı Sil'):
     if not df.empty:
         # Display the data as a table with an index
         st.write("Lütfen silinecek satırın numarasını seçin:")
@@ -153,6 +155,15 @@ if st.checkbox('Sil'):
             st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
     else:
         st.warning('No data available to delete.')
+
+# Excel file deletion
+if st.checkbox('Yüklenen Excel Dosyasını Sil'):
+    if EXCEL_FILE.exists():
+        if st.button('Excel Dosyasını Sil'):
+            EXCEL_FILE.unlink()  # Delete the Excel file
+            st.success(f'{selected_file_name} başarıyla silindi!')
+    else:
+        st.warning('Bu dosya zaten mevcut değil.')
 
 # Display the updated data under "KM VE MAZOT HESAP"
 st.subheader('Veriler:')
