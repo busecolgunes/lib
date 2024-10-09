@@ -9,7 +9,7 @@ st.title('OMAS ARAÇ YAKIT TAKİP SİSTEMİ')
 # Display the current data section title
 st.subheader('KM VE MAZOT HESAPLAMA')
 
-# List of available Excel files
+# List of available Excel files (including the new ones)
 files_dict = {
     '06BFD673': '06BFD673.xlsx',
     '01ACB022': '01ACB022.xlsx',
@@ -20,7 +20,11 @@ files_dict = {
     '01ZD116': '01ZD116.xlsx',
     'FORKLIFT': 'FORKLIFT.xlsx',
     '34BAG417': '34BAG417.xlsx',
-    '34BIT882': '34BIT882.xlsx'
+    '34BIT882': '34BIT882.xlsx',
+    '01BOK56': '01BOK56.xlsx',  # New file
+    '01SH480': '01SH480.xlsx',  # New file
+    '01ACJ962': '01ACJ962.xlsx',  # New file
+    'JENERATOR': 'JENERATOR.xlsx'  # New file
 }
 
 # Allow the user to select which file to work with
@@ -88,6 +92,27 @@ if st.button('Ekle'):
 
     # Show success message
     st.success(f'Data saved to {selected_file_name}!')
+
+# File upload functionality to append data
+uploaded_file = st.file_uploader("Bir Excel dosyası yükleyin ve mevcut veriye ekleyin", type="xlsx")
+if uploaded_file is not None:
+    try:
+        # Read the uploaded Excel file
+        uploaded_df = pd.read_excel(uploaded_file)
+        
+        # Check if the columns match
+        if list(uploaded_df.columns) == list(df.columns):
+            # Append the uploaded data to the existing data
+            df = pd.concat([df, uploaded_df], ignore_index=True)
+
+            # Save the updated DataFrame to the selected Excel file
+            df.to_excel(EXCEL_FILE, index=False)
+
+            st.success(f'{uploaded_file.name} verileri {selected_file_name} dosyasına eklendi!')
+        else:
+            st.error('Yüklenen dosya uygun bir formatta değil, lütfen sütunların doğru olduğundan emin olun.')
+    except Exception as e:
+        st.error(f'Hata oluştu: {e}')
 
 # Delete functionality
 if st.checkbox('Sil'):
