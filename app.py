@@ -103,12 +103,19 @@ if uploaded_file is not None:
         # Read the uploaded Excel file
         uploaded_df = pd.read_excel(uploaded_file)
         
+        # Standardize column names (lowercase and strip whitespaces) for both the uploaded file and the expected columns
+        uploaded_df.columns = uploaded_df.columns.str.lower().str.strip()  # Normalize uploaded columns
+        expected_columns_normalized = [col.lower().strip() for col in expected_columns]  # Normalize expected columns
+
         # Compare columns between uploaded file and expected columns
         uploaded_columns = list(uploaded_df.columns)
-        missing_columns = [col for col in expected_columns if col not in uploaded_columns]
-        extra_columns = [col for col in uploaded_columns if col not in expected_columns]
+        missing_columns = [col for col in expected_columns_normalized if col not in uploaded_columns]
+        extra_columns = [col for col in uploaded_columns if col not in expected_columns_normalized]
         
         if not missing_columns and not extra_columns:
+            # Rename columns in the uploaded file to match exactly with expected columns
+            uploaded_df.columns = expected_columns  # This ensures the correct naming
+
             # Append the uploaded data to the existing data
             df = pd.concat([df, uploaded_df], ignore_index=True)
 
@@ -124,6 +131,7 @@ if uploaded_file is not None:
                 st.warning(f"Fazla olan sütunlar: {', '.join(extra_columns)}")
     except Exception as e:
         st.error(f'Hata oluştu: {e}')
+
 
 # Delete functionality
 if st.checkbox('Sil'):
