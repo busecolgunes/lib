@@ -9,7 +9,7 @@ st.title('OMAS ARAÇ YAKIT TAKİP SİSTEMİ')
 # Display the current data section title
 st.subheader('KM VE MAZOT HESAPLAMA')
 
-# List of available Excel files (including the new ones)
+# List of available Excel files
 files_dict = {
     '06BFD673': '06BFD673.xlsx',
     '01ACB022': '01ACB022.xlsx',
@@ -20,11 +20,7 @@ files_dict = {
     '01ZD116': '01ZD116.xlsx',
     'FORKLIFT': 'FORKLIFT.xlsx',
     '34BAG417': '34BAG417.xlsx',
-    '34BIT882': '34BIT882.xlsx',
-    '01BOK56': '01BOK56.xlsx',
-    '01SH480': '01SH480.xlsx',
-    '01ACJ962': '01ACJ962.xlsx',
-    'JENERATOR': 'JENERATOR.xlsx'
+    '34BIT882': '34BIT882.xlsx'
 }
 
 # Allow the user to select which file to work with
@@ -35,14 +31,11 @@ selected_file_name = files_dict[selected_file_key]
 current_dir = Path(__file__).parent if '__file__' in locals() else Path.cwd()
 EXCEL_FILE = current_dir / selected_file_name
 
-# Expected column names
-expected_columns = ['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100']
-
 # Load the data if the file exists, if not, create a new DataFrame with predefined columns
 if EXCEL_FILE.exists():
     df = pd.read_excel(EXCEL_FILE)
 else:
-    df = pd.DataFrame(columns=expected_columns)
+    df = pd.DataFrame(columns=['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100'])
 
 # Create input fields for the user
 tarih = st.text_input('Tarih:')
@@ -96,47 +89,8 @@ if st.button('Ekle'):
     # Show success message
     st.success(f'Data saved to {selected_file_name}!')
 
-# File upload functionality to append data
-uploaded_file = st.file_uploader("Bir Excel dosyası yükleyin ve mevcut veriye ekleyin", type="xlsx")
-if uploaded_file is not None:
-    try:
-        # Read the uploaded Excel file
-        uploaded_df = pd.read_excel(uploaded_file)
-        
-        # Standardize column names (lowercase and strip whitespaces) for both the uploaded file and the expected columns
-        uploaded_df.columns = uploaded_df.columns.str.lower().str.strip()  # Normalize uploaded columns
-        expected_columns_normalized = [col.lower().strip() for col in expected_columns]  # Normalize expected columns
-
-        # Compare columns between uploaded file and expected columns
-        uploaded_columns = list(uploaded_df.columns)
-        missing_columns = [col for col in expected_columns_normalized if col not in uploaded_columns]
-        extra_columns = [col for col in uploaded_columns if col not in expected_columns_normalized]
-
-        if not missing_columns and not extra_columns:
-            # Rename columns in the uploaded file to match exactly with expected columns
-            uploaded_df.columns = expected_columns  # This ensures the correct naming
-
-            # Append the uploaded data to the existing data
-            df = pd.concat([df, uploaded_df], ignore_index=True)
-
-            # Save the updated DataFrame to the selected Excel file
-            df.to_excel(EXCEL_FILE, index=False)
-
-            st.success(f'{uploaded_file.name} verileri {selected_file_name} dosyasına eklendi!')
-        else:
-            st.error('Yüklenen dosya sütunları uyuşmuyor!')
-            if missing_columns:
-                st.warning(f"Beklenen ancak eksik olan sütunlar: {', '.join(missing_columns)}")
-            if extra_columns:
-                st.warning(f"Fazla olan sütunlar: {', '.join(extra_columns)}")
-    except Exception as e:
-        st.error(f'Hata oluştu: {e}')
-
 # Delete functionality
-st.subheader('Veri Silme Seçenekleri')
-
-# Row deletion
-if st.checkbox('Veri Satırı Sil'):
+if st.checkbox('Sil'):
     if not df.empty:
         # Display the data as a table with an index
         st.write("Lütfen silinecek satırın numarasını seçin:")
@@ -155,15 +109,6 @@ if st.checkbox('Veri Satırı Sil'):
             st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
     else:
         st.warning('No data available to delete.')
-
-# Excel file deletion
-if st.checkbox('Yüklenen Excel Dosyasını Sil'):
-    if EXCEL_FILE.exists():
-        if st.button('Excel Dosyasını Sil'):
-            EXCEL_FILE.unlink()  # Delete the Excel file
-            st.success(f'{selected_file_name} başarıyla silindi!')
-    else:
-        st.warning('Bu dosya zaten mevcut değil.')
 
 # Display the updated data under "KM VE MAZOT HESAP"
 st.subheader('Veriler:')
@@ -184,4 +129,4 @@ if not df.empty:
         data=excel_data,
         file_name=selected_file_name,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    ) 
