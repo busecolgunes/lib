@@ -35,11 +35,14 @@ selected_file_name = files_dict[selected_file_key]
 current_dir = Path(__file__).parent if '__file__' in locals() else Path.cwd()
 EXCEL_FILE = current_dir / selected_file_name
 
+# Expected column names
+expected_columns = ['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100']
+
 # Load the data if the file exists, if not, create a new DataFrame with predefined columns
 if EXCEL_FILE.exists():
     df = pd.read_excel(EXCEL_FILE)
 else:
-    df = pd.DataFrame(columns=['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100'])
+    df = pd.DataFrame(columns=expected_columns)
 
 # Create input fields for the user
 tarih = st.text_input('Tarih:')
@@ -100,8 +103,12 @@ if uploaded_file is not None:
         # Read the uploaded Excel file
         uploaded_df = pd.read_excel(uploaded_file)
         
-        # Check if the columns match
-        if list(uploaded_df.columns) == list(df.columns):
+        # Compare columns between uploaded file and expected columns
+        uploaded_columns = list(uploaded_df.columns)
+        missing_columns = [col for col in expected_columns if col not in uploaded_columns]
+        extra_columns = [col for col in uploaded_columns if col not in expected_columns]
+        
+        if not missing_columns and not extra_columns:
             # Append the uploaded data to the existing data
             df = pd.concat([df, uploaded_df], ignore_index=True)
 
@@ -110,7 +117,11 @@ if uploaded_file is not None:
 
             st.success(f'{uploaded_file.name} verileri {selected_file_name} dosyasına eklendi!')
         else:
-            st.error('Yüklenen dosya uygun bir formatta değil, lütfen sütunların doğru olduğundan emin olun.')
+            st.error('Yüklenen dosya sütunları uyuşmuyor!')
+            if missing_columns:
+                st.warning(f"Beklenen ancak eksik olan sütunlar: {', '.join(missing_columns)}")
+            if extra_columns:
+                st.warning(f"Fazla olan sütunlar: {', '.join(extra_columns)}")
     except Exception as e:
         st.error(f'Hata oluştu: {e}')
 
