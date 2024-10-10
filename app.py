@@ -47,10 +47,6 @@ if EXCEL_FILE.exists():
 else:
     df = pd.DataFrame(columns=expected_columns)
 
-# Display the current data including depodakalanmazot
-st.subheader('Veriler (Depodaki Kalan Mazot ile Birlikte):')
-st.dataframe(df[['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'depodakalanmazot']])
-
 # Create input fields for the user
 tarih = st.text_input('Tarih:')
 baslangickm = st.number_input('Mevcut Kilometre:', min_value=0)
@@ -59,14 +55,11 @@ depoyaalinanmazot = st.number_input('Depoya Alınan Mazot:', min_value=0)
 
 # When the user clicks the Submit button
 if st.button('Ekle'):
-    # Calculate the cumulative mazot (toplammazot)
-    toplammazot = df['mazot'].sum() + mazot
-
     # Calculate katedilenyol (current row's baslangickm - previous row's baslangickm)
     if not df.empty:
         previous_km = df.iloc[-1]['baslangickm']
         katedilenyol = baslangickm - previous_km
-        previous_depomazot = df.iloc[-1]['depomazot']
+        previous_depomazot = df.iloc[-1]['depodakalanmazot']
     else:
         katedilenyol = 0  # No previous entry
         previous_depomazot = 0  # No previous entry for depomazot
@@ -85,9 +78,12 @@ if st.button('Ekle'):
     else:
         kumulatif100 = 0  # Avoid division by zero
 
+    # Calculate the cumulative mazot (toplammazot) across all rows
+    toplammazot = df['mazot'].sum() + mazot
+
     # Calculate depomazot and depodakalanmazot
-    depomazot = previous_depomazot + depoyaalinanmazot
-    depodakalanmazot = depomazot - mazot
+    depomazot = previous_depomazot + depoyaalinanmazot - mazot
+    depodakalanmazot = depomazot  # Depodaki kalan mazot
 
     # Add the new record
     new_record = {
@@ -96,7 +92,7 @@ if st.button('Ekle'):
         'mazot': mazot,
         'katedilenyol': katedilenyol,
         'toplamyol': toplam_yol,
-        'toplammazot': toplammazot,
+        'toplammazot': toplammazot,  # Add toplammazot to the record
         'ortalama100': ortalama100,
         'kumulatif100': kumulatif100,
         'depomazot': depomazot,
@@ -113,6 +109,10 @@ if st.button('Ekle'):
         st.success(f'Data saved to {selected_file_name}!')
     except Exception as e:
         st.error(f'Error saving file: {e}')
+
+# Move the data table to the bottom of the app and include toplammazot in the display
+st.subheader('Veriler (Depodaki Kalan Mazot ile Birlikte ve Toplam Mazot):')
+st.dataframe(df[['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'depodakalanmazot']])
 
 # File upload functionality to append data
 uploaded_file = st.file_uploader("Bir Excel dosyası yükleyin ve mevcut veriye ekleyin", type="xlsx")
