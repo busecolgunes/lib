@@ -36,7 +36,7 @@ current_dir = Path(__file__).parent if '__file__' in locals() else Path.cwd()
 EXCEL_FILE = current_dir / selected_file_name
 
 # Expected column names
-expected_columns = ['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100']
+expected_columns = ['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100', 'depomazot', 'depoyaalinanmazot', 'depodakalanmazot']
 
 # Load the data if the file exists, if not, create a new DataFrame with predefined columns
 if EXCEL_FILE.exists():
@@ -48,6 +48,7 @@ else:
 tarih = st.text_input('Tarih:')
 baslangickm = st.number_input('Mevcut Kilometre:', min_value=0)
 mazot = st.number_input('Alınan Mazot:', min_value=0)
+depoyaalinanmazot = st.number_input('Depoya Alınan Mazot:', min_value=0)
 
 # When the user clicks the Submit button
 if st.button('Ekle'):
@@ -58,8 +59,10 @@ if st.button('Ekle'):
     if not df.empty:
         previous_km = df.iloc[-1]['baslangickm']
         katedilenyol = baslangickm - previous_km
+        previous_depomazot = df.iloc[-1]['depomazot']
     else:
         katedilenyol = 0  # No previous entry
+        previous_depomazot = 0  # No previous entry for depomazot
 
     # Calculate toplamyol as the sum of all previous katedilenyol plus current
     toplam_yol = df['katedilenyol'].sum() + katedilenyol
@@ -75,6 +78,10 @@ if st.button('Ekle'):
     else:
         kumulatif100 = 0  # Avoid division by zero
 
+    # Calculate depomazot and depodakalanmazot
+    depomazot = previous_depomazot + depoyaalinanmazot
+    depodakalanmazot = depomazot - mazot
+
     # Add the new record
     new_record = {
         'tarih': tarih,
@@ -84,7 +91,10 @@ if st.button('Ekle'):
         'toplamyol': toplam_yol,
         'toplammazot': toplammazot,
         'ortalama100': ortalama100,
-        'kumulatif100': kumulatif100
+        'kumulatif100': kumulatif100,
+        'depomazot': depomazot,
+        'depoyaalinanmazot': depoyaalinanmazot,
+        'depodakalanmazot': depodakalanmazot
     }
 
     # Append the new record to the DataFrame
