@@ -195,4 +195,7 @@ if not df.empty:
     excel_data = to_excel(df)
     st.download_button(
         label="Excel Dosyasını İndir",
-        data=
+        data=excel_data,
+        file_name=selected_file_name,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
