@@ -2,8 +2,3 @@ streamlit
 pandas
 openpyxl
 xlsxwriter
-BytesIO
-pathlib
-shutil
-datetime
-locale
