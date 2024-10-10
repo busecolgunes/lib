@@ -47,9 +47,9 @@ if EXCEL_FILE.exists():
 else:
     df = pd.DataFrame(columns=expected_columns)
 
-# Display the current data
-st.subheader('Veriler:')
-st.dataframe(df)
+# Display the current data including depodakalanmazot
+st.subheader('Veriler (Depodaki Kalan Mazot ile Birlikte):')
+st.dataframe(df[['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'depodakalanmazot']])
 
 # Create input fields for the user
 tarih = st.text_input('Tarih:')
