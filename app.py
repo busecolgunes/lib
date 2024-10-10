@@ -67,9 +67,6 @@ try:
 except ValueError:
     st.error("Lütfen saati HH:MM formatında giriniz!")
 
-# Display the entered date in Turkish format
-tarih_turkish = tarih.strftime('%d %B %Y')  # Turkish date format
-
 # Input fields for other data
 baslangickm = st.number_input('Mevcut Kilometre:', min_value=0)
 mazot = st.number_input('Alınan Mazot:', min_value=0)
@@ -112,7 +109,7 @@ if st.button('Ekle'):
 
         # Add the new record
         new_record = {
-            'tarih': tarih_turkish,  # Use Turkish date format
+            'tarih': tarih,  # Store the raw date input
             'saat': saat,  # User-entered time
             'baslangickm': baslangickm,
             'mazot': mazot,
@@ -186,4 +183,41 @@ if st.checkbox('Veri Satırı Sil'):
 
         # Confirm and delete the selected row
         if st.button('Delete Row'):
-            df = df.drop(df
+            df = df.drop(df.index[row_index_to_delete]).reset_index(drop=True)
+
+            # Save the updated DataFrame to the selected Excel file
+            df.to_excel(EXCEL_FILE, index=False)
+
+            st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
+    else:
+        st.warning('No data available to delete.')
+
+# Excel file download link
+def to_excel(df):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False)
+    processed_data = output.getvalue()
+    return processed_data
+
+if st.button('Excel Dosyasını İndir'):
+    excel_data = to_excel(df)
+    st.download_button(
+        label='Download Excel File',
+        data=excel_data,
+        file_name=selected_file_name,
+        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+# Excel file deletion
+if st.checkbox('Yüklenen Excel Dosyasını Sil'):
+    if EXCEL_FILE.exists():
+        if st.button('Excel Dosyasını Sil'):
+            EXCEL_FILE.unlink()  # Delete the Excel file
+            st.success(f'{selected_file_name} başarıyla silindi!')
+    else:
+        st.warning('Bu dosya zaten mevcut değil.')
+
+# Display the updated data under "KM VE MAZOT HESAP"
+st.subheader('Veriler:')
+st.dataframe(df)  # Show the latest state of the DataFrame at the end
