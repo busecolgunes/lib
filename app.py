@@ -93,8 +93,8 @@ if st.button('Ekle'):
         'katedilenyol': katedilenyol,
         'toplamyol': toplam_yol,
         'toplammazot': toplammazot,  # Add toplammazot to the record
-        'ortalama100': ortalama100,
-        'kumulatif100': kumulatif100,
+        'ortalama100': ortalama100,  # Add ortalama100 to the record
+        'kumulatif100': kumulatif100,  # Add kumulatif100 to the record
         'depomazot': depomazot,
         'depoyaalinanmazot': depoyaalinanmazot,
         'depodakalanmazot': depodakalanmazot
@@ -110,9 +110,9 @@ if st.button('Ekle'):
     except Exception as e:
         st.error(f'Error saving file: {e}')
 
-# Move the data table to the bottom of the app and include toplammazot in the display
-st.subheader('Veriler (Depodaki Kalan Mazot ile Birlikte ve Toplam Mazot):')
-st.dataframe(df[['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'depodakalanmazot']])
+# Move the data table to the bottom of the app and include toplammazot, ortalama100, and kumulatif100 in the display
+st.subheader('Veriler (Depodaki Kalan Mazot, Toplam Mazot, Ortalama 100, ve Kümülatif 100 ile):')
+st.dataframe(df[['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100', 'depodakalanmazot']])
 
 # File upload functionality to append data
 uploaded_file = st.file_uploader("Bir Excel dosyası yükleyin ve mevcut veriye ekleyin", type="xlsx")
