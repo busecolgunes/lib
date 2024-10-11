@@ -128,7 +128,63 @@ if st.button('Ekle'):
     df.to_excel(EXCEL_FILE, index=False)
     st.success(f'Data saved to {selected_file_name}!')
 
-# Display the data table at the bottom of the app
+# Move the data table to the bottom of the app
 st.subheader('Veriler:')
 st.dataframe(df)
 
+# --- Upload Excel file and append to existing data ---
+uploaded_file = st.file_uploader("Bir Excel dosyası yükleyin ve mevcut veriye ekleyin", type="xlsx")
+if uploaded_file is not None:
+    try:
+        # Read the uploaded Excel file
+        uploaded_df = pd.read_excel(uploaded_file)
+        
+        # Standardize column names (lowercase and strip whitespaces) for both the uploaded file and the expected columns
+        uploaded_df.columns = uploaded_df.columns.str.lower().str.strip()  # Normalize uploaded columns
+        expected_columns_normalized = [col.lower().strip() for col in expected_columns]  # Normalize expected columns
+
+        # Compare columns between uploaded file and expected columns
+        uploaded_columns = list(uploaded_df.columns)
+        missing_columns = [col for col in expected_columns_normalized if col not in uploaded_columns]
+        extra_columns = [col for col in uploaded_columns if col not in expected_columns_normalized]
+
+        if not missing_columns and not extra_columns:
+            # Rename columns in the uploaded file to match exactly with expected columns
+            uploaded_df.columns = expected_columns  # This ensures the correct naming
+
+            # Append the uploaded data to the existing data
+            df = pd.concat([df, uploaded_df], ignore_index=True)
+
+            # Save the updated DataFrame to the selected Excel file
+            df.to_excel(EXCEL_FILE, index=False)
+
+            st.success(f'{uploaded_file.name} verileri {selected_file_name} dosyasına eklendi!')
+        else:
+            st.error('Yüklenen dosya sütunları uyuşmuyor!')
+            if missing_columns:
+                st.warning(f"Beklenen ancak eksik olan sütunlar: {', '.join(missing_columns)}")
+            if extra_columns:
+                st.warning(f"Fazla olan sütunlar: {', '.join(extra_columns)}")
+    except Exception as e:
+        st.error(f'Hata oluştu: {e}')
+
+# --- Row deletion functionality ---
+st.subheader('Veri Silme Seçenekleri')
+
+# Row deletion
+if st.checkbox('Veri Satırı Sil'):
+    if not df.empty:
+        # Display the data as a table with an index
+        st.write("Lütfen silinecek satırın numarasını seçin:")
+        st.dataframe(df)
+
+        # User input to select the row index to delete
+        row_index_to_delete = st.number_input('Silinecek satır numarası:', min_value=0, max_value=len(df) - 1, step=1)
+
+        # Confirm and delete the selected row
+        if st.button('Satırı Sil'):
+            df = df.drop(df.index[row_index_to_delete])  # Drop the row at the given index
+            df.to_excel(EXCEL_FILE, index=False)  # Save the updated DataFrame to Excel file
+            st.success(f"Satır {row_index_to_delete} başarıyla silindi!")
+    else:
+        st.warning("Silinecek veri yok.")
