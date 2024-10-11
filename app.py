@@ -132,3 +132,48 @@ if st.button('Ekle'):
 # Display the data
 st.subheader('Veriler (Depodaki Kalan Mazot, Toplam Mazot, Ortalama 100, ve Kümülatif 100 ile):')
 st.dataframe(df[['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100', 'depodakalanmazot']])
+
+# File upload functionality to append data
+uploaded_file = st.file_uploader("Bir Excel dosyası yükleyin ve mevcut veriye ekleyin", type="xlsx")
+if uploaded_file is not None:
+    try:
+        # Read the uploaded Excel file
+        uploaded_df = pd.read_excel(uploaded_file)
+        
+        # Standardize column names (lowercase and strip whitespaces) for both the uploaded file and the expected columns
+        uploaded_df.columns = uploaded_df.columns.str.lower().str.strip()  # Normalize uploaded columns
+        expected_columns_normalized = [col.lower().strip() for col in expected_columns]  # Normalize expected columns
+
+        # Compare columns between uploaded file and expected columns
+        uploaded_columns = list(uploaded_df.columns)
+        missing_columns = [col for col in expected_columns_normalized if col not in uploaded_columns]
+        extra_columns = [col for col in uploaded_columns if col not in expected_columns_normalized]
+
+        if not missing_columns and not extra_columns:
+            # Rename columns in the uploaded file to match exactly with expected columns
+            uploaded_df.columns = expected_columns  # This ensures the correct naming
+
+            # Append the uploaded data to the existing data
+            df = pd.concat([df, uploaded_df], ignore_index=True)
+
+            # Save the updated DataFrame to the selected Excel file
+            df.to_excel(EXCEL_FILE, index=False)
+
+            st.success(f'{uploaded_file.name} verileri {selected_file_name} dosyasına eklendi!')
+        else:
+            # Display missing or extra columns if validation fails
+            st.warning(f"Yüklenen dosya sütunları hatalı. Eksik sütunlar: {missing_columns}, Ekstra sütunlar: {extra_columns}")
+    except Exception as e:
+        st.error(f'Hata oluştu: {str(e)}')
+
+# Provide a download link for the updated Excel file
+buffer = BytesIO()
+df.to_excel(buffer, index=False)
+buffer.seek(0)
+
+st.download_button(
+    label="Güncellenmiş Excel'i indir",
+    data=buffer,
+    file_name=f'{selected_file_key}_updated.xlsx',
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
