@@ -3,7 +3,7 @@ import pandas as pd
 from io import BytesIO
 from pathlib import Path
 
-# Add a title to the app
+# Title of the app
 st.title('OMAS ARAÇ YAKIT TAKİP SİSTEMİ')
 
 # Display the current data section title
@@ -31,23 +31,47 @@ files_dict = {
 selected_file_key = st.selectbox('Bir plaka seçiniz:', list(files_dict.keys()))
 selected_file_name = files_dict[selected_file_key]
 
-# Define the file path
+# Define the file path for individual vehicle data
 current_dir = Path(__file__).parent if '__file__' in locals() else Path.cwd()
 EXCEL_FILE = current_dir / selected_file_name
 
-# Debugging: Check the file path in case of errors
-st.write(f"Using file: {EXCEL_FILE}")
+# Define global file for storing global remaining fuel across all vehicles
+GLOBAL_FILE = current_dir / 'global_data.xlsx'
 
-# Expected column names
+# Load or initialize the global fuel data
+if GLOBAL_FILE.exists():
+    global_df = pd.read_excel(GLOBAL_FILE)
+else:
+    global_df = pd.DataFrame(columns=['vehicle', 'depodakalanmazot'])
+
+# Function to get global remaining fuel for a specific vehicle
+def get_global_remaining_fuel(vehicle_key):
+    if vehicle_key in global_df['vehicle'].values:
+        return global_df.loc[global_df['vehicle'] == vehicle_key, 'depodakalanmazot'].values[0]
+    else:
+        return 0
+
+# Display the global "Kalan Mazot" input
+global_remaining_fuel = st.number_input('Kalan Mazot (Global):', value=float(get_global_remaining_fuel(selected_file_key)))
+
+# Save the updated global remaining fuel to the global file
+if st.button('Update Kalan Mazot'):
+    if selected_file_key in global_df['vehicle'].values:
+        global_df.loc[global_df['vehicle'] == selected_file_key, 'depodakalanmazot'] = global_remaining_fuel
+    else:
+        global_df = pd.concat([global_df, pd.DataFrame({'vehicle': [selected_file_key], 'depodakalanmazot': [global_remaining_fuel]})], ignore_index=True)
+
+    global_df.to_excel(GLOBAL_FILE, index=False)
+    st.success(f'Global kalan mazot {selected_file_key} için güncellendi!')
+
+# Load the vehicle data or create an empty DataFrame
 expected_columns = ['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100', 'depomazot', 'depoyaalinanmazot', 'depodakalanmazot']
-
-# Load the data from the file if it exists, otherwise create an empty DataFrame
 if EXCEL_FILE.exists():
     df = pd.read_excel(EXCEL_FILE)
 else:
     df = pd.DataFrame(columns=expected_columns)
 
-# Create input fields for the user
+# Input fields for the user to add new data
 tarih = st.text_input('Tarih:')
 baslangickm = st.number_input('Mevcut Kilometre:', min_value=0)
 mazot = st.number_input('Alınan Mazot:', min_value=0)
@@ -64,26 +88,15 @@ if st.button('Ekle'):
         katedilenyol = 0  # No previous entry
         previous_depomazot = 0  # No previous entry for depomazot
 
-    # Calculate toplamyol as the sum of all previous katedilenyol plus current
+    # Calculate toplamyol, ortalama100, kumulatif100, toplammazot
     toplam_yol = df['katedilenyol'].sum() + katedilenyol
-
-    # Calculate ortalama100 and kumulatif100
-    if katedilenyol > 0:
-        ortalama100 = (100 / katedilenyol) * mazot
-    else:
-        ortalama100 = 0  # Avoid division by zero
-
-    if toplam_yol > 0:
-        kumulatif100 = (100 / toplam_yol) * mazot
-    else:
-        kumulatif100 = 0  # Avoid division by zero
-
-    # Calculate the cumulative mazot (toplammazot) across all rows
     toplammazot = df['mazot'].sum() + mazot
+    ortalama100 = (100 / katedilenyol) * mazot if katedilenyol > 0 else 0
+    kumulatif100 = (100 / toplam_yol) * mazot if toplam_yol > 0 else 0
 
-    # Calculate depomazot and depodakalanmazot
-    depomazot = previous_depomazot + depoyaalinanmazot - mazot
-    depodakalanmazot = depomazot  # Depodaki kalan mazot
+    # Use global_remaining_fuel instead of local depomazot
+    depomazot = global_remaining_fuel + depoyaalinanmazot - mazot
+    depodakalanmazot = depomazot
 
     # Add the new record
     new_record = {
@@ -92,110 +105,30 @@ if st.button('Ekle'):
         'mazot': mazot,
         'katedilenyol': katedilenyol,
         'toplamyol': toplam_yol,
-        'toplammazot': toplammazot,  # Add toplammazot to the record
-        'ortalama100': ortalama100,  # Add ortalama100 to the record
-        'kumulatif100': kumulatif100,  # Add kumulatif100 to the record
+        'toplammazot': toplammazot,
+        'ortalama100': ortalama100,
+        'kumulatif100': kumulatif100,
         'depomazot': depomazot,
         'depoyaalinanmazot': depoyaalinanmazot,
         'depodakalanmazot': depodakalanmazot
     }
-
+    
     # Append the new record to the DataFrame
     df = pd.concat([df, pd.DataFrame(new_record, index=[0])], ignore_index=True)
 
     # Save the updated DataFrame to the selected Excel file
-    try:
-        df.to_excel(EXCEL_FILE, index=False)
-        st.success(f'Data saved to {selected_file_name}!')
-    except Exception as e:
-        st.error(f'Error saving file: {e}')
+    df.to_excel(EXCEL_FILE, index=False)
+    st.success(f'Data saved to {selected_file_name}!')
 
-# Move the data table to the bottom of the app and include toplammazot, ortalama100, and kumulatif100 in the display
+    # Update the global depodakalanmazot
+    if selected_file_key in global_df['vehicle'].values:
+        global_df.loc[global_df['vehicle'] == selected_file_key, 'depodakalanmazot'] = depodakalanmazot
+    else:
+        global_df = pd.concat([global_df, pd.DataFrame({'vehicle': [selected_file_key], 'depodakalanmazot': [depodakalanmazot]})], ignore_index=True)
+
+    # Save the updated global data
+    global_df.to_excel(GLOBAL_FILE, index=False)
+
+# Display the data
 st.subheader('Veriler (Depodaki Kalan Mazot, Toplam Mazot, Ortalama 100, ve Kümülatif 100 ile):')
 st.dataframe(df[['tarih', 'baslangickm', 'mazot', 'katedilenyol', 'toplamyol', 'toplammazot', 'ortalama100', 'kumulatif100', 'depodakalanmazot']])
-
-# File upload functionality to append data
-uploaded_file = st.file_uploader("Bir Excel dosyası yükleyin ve mevcut veriye ekleyin", type="xlsx")
-if uploaded_file is not None:
-    try:
-        # Read the uploaded Excel file
-        uploaded_df = pd.read_excel(uploaded_file)
-        
-        # Standardize column names (lowercase and strip whitespaces) for both the uploaded file and the expected columns
-        uploaded_df.columns = uploaded_df.columns.str.lower().str.strip()  # Normalize uploaded columns
-        expected_columns_normalized = [col.lower().strip() for col in expected_columns]  # Normalize expected columns
-
-        # Compare columns between uploaded file and expected columns
-        uploaded_columns = list(uploaded_df.columns)
-        missing_columns = [col for col in expected_columns_normalized if col not in uploaded_columns]
-        extra_columns = [col for col in uploaded_columns if col not in expected_columns_normalized]
-
-        if not missing_columns and not extra_columns:
-            # Rename columns in the uploaded file to match exactly with expected columns
-            uploaded_df.columns = expected_columns  # This ensures the correct naming
-
-            # Append the uploaded data to the existing data
-            df = pd.concat([df, uploaded_df], ignore_index=True)
-
-            # Save the updated DataFrame to the selected Excel file
-            df.to_excel(EXCEL_FILE, index=False)
-
-            st.success(f'{uploaded_file.name} verileri {selected_file_name} dosyasına eklendi!')
-        else:
-            st.error('Yüklenen dosya sütunları uyuşmuyor!')
-            if missing_columns:
-                st.warning(f"Beklenen ancak eksik olan sütunlar: {', '.join(missing_columns)}")
-            if extra_columns:
-                st.warning(f"Fazla olan sütunlar: {', '.join(extra_columns)}")
-    except Exception as e:
-        st.error(f'Hata oluştu: {e}')
-
-# Delete functionality
-st.subheader('Veri Silme Seçenekleri')
-
-# Row deletion
-if st.checkbox('Veri Satırı Sil'):
-    if not df.empty:
-        # Display the data as a table with an index
-        st.write("Lütfen silinecek satırın numarasını seçin:")
-        st.dataframe(df)
-
-        # User input to select the row index to delete
-        row_index_to_delete = st.number_input('Silinecek satır numarası:', min_value=0, max_value=len(df) - 1, step=1)
-
-        # Confirm and delete the selected row
-        if st.button('Delete Row'):
-            df = df.drop(df.index[row_index_to_delete]).reset_index(drop=True)
-
-            # Save the updated DataFrame to the selected Excel file
-            df.to_excel(EXCEL_FILE, index=False)
-
-            st.success(f'Row {row_index_to_delete} deleted from {selected_file_name}!')
-    else:
-        st.warning('No data available to delete.')
-
-# Excel file deletion
-if st.checkbox('Yüklenen Excel Dosyasını Sil'):
-    if EXCEL_FILE.exists():
-        if st.button('Excel Dosyasını Sil'):
-            EXCEL_FILE.unlink()  # Delete the Excel file
-            st.success(f'{selected_file_name} başarıyla silindi!')
-    else:
-        st.warning('Bu dosya zaten mevcut değil.')
-
-# File download functionality to get the updated Excel file
-def to_excel(df):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False)
-    processed_data = output.getvalue()
-    return processed_data
-
-if not df.empty:
-    excel_data = to_excel(df)
-    st.download_button(
-        label="Excel Dosyasını İndir",
-        data=excel_data,
-        file_name=selected_file_name,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
